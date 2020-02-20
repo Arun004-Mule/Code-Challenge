@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="f57efa2d-e990-41ee-82c6-2385aa56ba65" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="sample-json-txt" doc:id="dcc90780-b8ed-4238-868b-42344499d3e2" >
+		<http:listener doc:name="Listener" doc:id="a9d3fb92-418d-4dd1-bb7f-459ed48cc680" config-ref="HTTP_Listener_config" path="/test">
+			<http:response statusCode="201" />
+		</http:listener>
+		<ee:transform doc:name="Transform Message" doc:id="41d5c47d-a3f9-46e8-8957-935a923f5c89" >
+<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+ 
+(payload pluck (value,key)  -> { 
+		value: value.first_name ++ ' ' ++  value.last_name ++ ' ' ++ key ++ ' profile is created in HRMS System.' 
+}) [0].value
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="call-lkp" doc:id="a080b0af-e4e5-406e-a8e6-f7fe992402a6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+
+lookup("flow2", payload)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="7fa65ce4-a53c-4235-bc97-2075f8d01f25" message="payload"/>
+	</flow>
+	<flow name="flow2" doc:id="24327f85-fd02-48aa-acd4-4894c88e9b6a">
+		<logger level="INFO" doc:name="Logger" doc:id="28aa64f4-e355-4374-8a79-54fd541410f2" message="#[payload]" />
+	</flow>
+	<flow name="CamelCase-3" doc:id="25e201f2-e11a-46e2-bbfc-0f839211c3d6">
+		<http:listener doc:name="Listener" doc:id="396771fc-62fe-4251-ba51-f9ec0123f6cc" config-ref="HTTP_Listener_config" path="/java" />
+		<java:invoke-static method="convertToTitleCaseIteratingChars(String)" doc:name="Invoke static" doc:id="2d717756-472d-4ff7-bf8d-ece2b2f43180" class="com.camelcase.ConvertCamelCase">
+			<java:args><![CDATA[#[%dw 2.0
+output application/java
+---
+attributes.queryParams]]]></java:args>
+		</java:invoke-static>
+		<logger level="INFO" doc:name="Logger" doc:id="c84b945b-5c26-47b9-9846-a62c02410f59" message="payload" />
+	</flow>
+	<flow name="ListNatural-nums-5" doc:id="bb6eb433-d44f-49c0-ba38-569829109ae8">
+		<http:listener doc:name="Listener" doc:id="59d07020-b4f1-4bfe-b957-97475bcba8c9" config-ref="HTTP_Listener_config" path="test/{num}" />
+		<ee:transform doc:name="Transform Message" doc:id="c00c52d4-ce96-441a-9e6c-5a14fa7d6c78">
+					<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var Num = attributes.uriParams.num
+---
+1 to Num as Number
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" message="#[payload]" />
+	</flow>
+	<flow name="Array-merge-4" doc:id="9667f727-8f4c-4ecf-b05a-92a49054b01b" >
+		<http:listener doc:name="Listener" doc:id="621c3e2b-06f1-4454-b411-ac4f2fc29e41" config-ref="HTTP_Listener_config" path="/source1"/>
+		<ee:transform doc:name="Transform Message" doc:id="db2bd176-b3d0-4434-9400-1568761a08d9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+var emp = {
+  "employee": [
+    {
+      "first_name": "Jan",
+      "id": "A007",
+      "last_name": "Doe"
+    },
+    {
+      "first_name": "Ron",
+      "id": "A008",
+      "last_name": "David"
+    },
+    {
+      "first_name": "Jane",
+      "id": "A009",
+      "last_name": "Kane"
+    },
+    {
+      "first_name": "Marsh",
+      "id": "A010",
+      "last_name": "Megan"
+    },
+    {
+      "first_name": "Kelly",
+      "id": "A011",
+      "last_name": "Mitch"
+    },
+    {
+      "first_name": "Chris",
+      "id": "A012",
+      "last_name": "Vaste"
+    }
+  ]
+}
+var marks = {
+  "scoreBoard": [
+    {
+      "id": "A007",
+      "score": [80, 75, 89, 100],
+      "subjects": ["Maths", "English", "Arts", "Drawimgs"]
+    },
+    {
+      "id": "A008",
+      "score": [70, 85, 69, 90],
+      "subjects": ["Maths", "English", "Arts", "Drawimgs"]
+    },
+    {
+      "id": "A021",
+      "score": [90, 87, 77, 95],
+      "subjects": ["Maths", "English", "Arts", "Drawimgs"]
+    }
+  ]
+}
+output application/json  
+---
+{
+  "certificate": emp.employee map ((item, index) -> {
+   "id": item.id,
+    "firstName": item.first_name,"LastName": item.last_name,
+    "MarksBySubjectWise": (marks.scoreBoard filter ((item01, index01) -> item01.id == item.id)) map ((item02, index02) -> (item02.subjects map 
+        '$': item02.score[$$]
+      ) reduce ($$ ++ $))
+    
+  })
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="12300fab-7f29-4813-b252-ebff129da1cd" />
+	</flow>
+	<flow name="Array-merge-4.2" doc:id="196b9596-5ab5-4741-9d41-05b9a6dd815b" >
+		<http:listener doc:name="Listener" doc:id="d404207c-4069-4530-8835-b5e9bffaad16" config-ref="HTTP_Listener_config" path="/source2"/>
+		<ee:transform doc:name="scenario2" doc:id="77263482-2ed9-4483-b733-16987cb498a9">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+var emp = {
+  "employee": [
+    {
+      "first_name": "Jan",
+      "id": "A007",
+      "last_name": "Doe"
+    },
+    {
+      "first_name": "Ron",
+      "id": "A008",
+      "last_name": "David"
+    },
+    {
+      "first_name": "Jane",
+      "id": "A009",
+      "last_name": "Kane"
+    },
+    {
+      "first_name": "Marsh",
+      "id": "A010",
+      "last_name": "Megan"
+    },
+    {
+      "first_name": "Kelly",
+      "id": "A011",
+      "last_name": "Mitch"
+    },
+    {
+      "first_name": "Chris",
+      "id": "A012",
+      "last_name": "Vaste"
+    }
+  ]
+}
+var marks = {
+  "scoreBoard": [
+    {
+      "id": "A007",
+      "score": [80, 75, 89, 100],
+      "subjects": ["Maths", "English", "Arts", "Drawimgs"]
+    },
+    {
+      "id": "A008",
+      "score": [70, 85, 69, 90],
+      "subjects": ["Maths", "English", "Arts", "Drawimgs"]
+    },
+    {
+      "id": "A021",
+      "score": [90, 87, 77, 95],
+      "subjects": ["Maths", "English", "Arts", "Drawimgs"]
+    }
+  ]
+}
+output application/json  
+---
+{
+  "certificate": (emp.employee map ((item, index) -> {
+  	"id": item.id,
+  	"firstName": item.first_name,
+    "LastName": item.last_name,
+    "MarksBySubjectWise": (marks.scoreBoard filter ((item01, index01) -> item01.id == item.id)) map ((item02, index02) -> (item02.subjects map 
+        '$': item02.score[$$]
+      ) reduce ($$ ++ $))
+    
+    
+  })) filter ((item03, index03) -> sizeOf(item03.MarksBySubjectWise) != 0)
+}
+
+
+
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="ef553775-f09c-4aa3-9785-b6889e69ed49" message="payload" />
+	</flow>
+	
+	
+</mule>
